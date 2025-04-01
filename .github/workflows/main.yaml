@@ -2,8 +2,7 @@ name: Check Appointments
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Runs every 30 minutes
-  workflow_dispatch:  # Allows manual triggering
+    - cron: '* * * * *'
 
 jobs:
   check:
