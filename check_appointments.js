@@ -4,17 +4,11 @@ import { debug } from './config.js';
 import { log_info } from "./log.js";
 
 async function normalizePage(page) {
-    log_info('Normalize page: reload & goto');
-    await page.reload();
     await page.goto('https://app.cituro.com/booking/bev#step=1', { waitUntil: 'networkidle2' });
 
-    // Wait for page to fully load with service options
-    log_info('Normalize page: waiting for buttons');
-    await page.waitForSelector('button.add-toggle', { timeout: 3000 });
+    // await page.waitForSelector('button.add-toggle', { timeout: 3000 });
 
-    const minusButton = await page.evaluateHandle(() => document.querySelector('button.add-toggle[active]'));
-
-    if (minusButton && minusButton.click) { minusButton.click(); };
+    return page;
 }
 
 /**
@@ -42,13 +36,11 @@ async function checkLocationAppointments(page, locationName) {
         }, locationName);
 
         if (!locationFound) {
-            console.log(`Could not find ${locationName} on the page`);
+            log_info(`Could not find ${locationName} on the page`);
             return false;
         }
 
-        console.log('WAITING for GroupEventSuggestionWidget');
-        await page.waitForSelector('.GroupEventSuggestionWidget', { timeout: 5000 });
-
+        await page.waitForNavigation();
 
         const appointments = await page.evaluate(() => {
             const dateButton = Array.from(document.querySelectorAll('.GroupEventSuggestionWidget'));
@@ -57,8 +49,7 @@ async function checkLocationAppointments(page, locationName) {
 
         return appointments;
     } catch (error) {
-        console.error(`Error checking ${locationName}:`, error);
-        return false;
+        throw error;
     }
 }
 
@@ -70,50 +61,29 @@ async function checkLocationAppointments(page, locationName) {
  * 3. Go back to main page
  * 4. Report the results
  */
-export async function checkAppointments() {
+export async function checkAppointments(venues) {
     log_info('Starting appointment checker...');
 
-    let foundAppointments = [];
-
-    const checkFor = ['PHS', 'trainerlisten'];
-
-    // Launch browser and open new page
     const browser = await puppeteer.launch({
         headless: !debug,
         defaultViewport: null
     });
-    const page = await browser.newPage();
 
     try {
-        // Navigate to the booking page
-        console.log('Navigating to booking page...');
-        await normalizePage(page);
+        const results = await Promise.all(venues.map(async (location) => ({ result: await checkLocationAppointments(await normalizePage(await browser.newPage()), location), location })));
+        const resultsFiltered = results.filter(({ result }) => result);
 
-        // ======== Check PHS ========
-        console.log('Checking PHS appointments...');
-        const phsAvailable = await checkLocationAppointments(page, 'PHS');
-        // ======== Check Sportforum Halle 2 ========
-        console.log('Checking Sportforum Halle 2 appointments...');
-        await normalizePage(page);
-        const sportforumAvailable = await checkLocationAppointments(page, 'trainerlisten');
-
-        // Report results
-        console.log('\n===== RESULTS =====');
-        console.log(`PHS: ${phsAvailable ? 'Appointments AVAILABLE!' : 'No appointments available'}`);
-        console.log(`Sportforum Halle 2: ${sportforumAvailable ? 'Appointments AVAILABLE!' : 'No appointments available'}`);
-
-        if (phsAvailable || sportforumAvailable) {
-            console.log('\n🎉 APPOINTMENTS FOUND! Check the website to book.');
-            phsAvailable && foundAppointments.push('PHS');
-            sportforumAvailable && foundAppointments.push('SPORTFORUM');
+        if (resultsFiltered.length) {
+            log_info('\n🎉 APPOINTMENTS FOUND! Check the website to book.');
         } else {
-            console.log('\nNo appointments available at this time.');
+            log_info('\nNo appointments available at this time.');
         }
+
+        return resultsFiltered;
     } catch (error) {
-        console.error('An error occurred:', error);
+        throw error;
     } finally {
+        log_info('finally executes anyway');
         await browser.close();
-        return foundAppointments;
     }
 }
-
