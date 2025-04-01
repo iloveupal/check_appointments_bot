@@ -2,7 +2,7 @@ name: Scheduled page check
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/20 * * * *'
 
 jobs:
   my_job:
@@ -15,18 +15,10 @@ jobs:
           node-version: '23'
       - name: Install dependencies
         run: npm install
-      - name: Create screenshots directory
-        run: mkdir -p screenshots
       - name: Run script
         run: npm start
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          CHECK_VENUES: phs,trainerlisten
+          CHECK_VENUES: phs,halle 2,halle 3
           DEBUG: true
-      - name: Upload screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: my-screenshots
-          path: screenshots/
-          retention-days: 1  # Optional, defaults to 90 days
