@@ -48,7 +48,7 @@ async function checkLocationAppointments(page, locationName) {
         await (new Promise((r) => { setTimeout(r, 1000)}));
         log_info(`waited for navigation: ${locationName}`);
 
-        console.log(await page.screenshot({ path: `./screenshots/${locationName}.jpg`, fullPage: true }));
+        // process.env.SCREENSHOT && await page.screenshot({ path: `./screenshots/${locationName}.jpg`, fullPage: true });
 
         const appointments = await page.evaluate((locationName) => {
             const dateButton = Array.from(document.querySelectorAll('.GroupEventSuggestionWidget'));
