@@ -66,7 +66,11 @@ export async function checkAppointments(venues) {
 
     const browser = await puppeteer.launch({
         headless: !debug,
-        defaultViewport: null
+        defaultViewport: null,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+        ]
     });
 
     try {
