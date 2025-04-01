@@ -2,8 +2,7 @@ name: Check Appointments
 
 on:
   schedule:
-    - cron: '* * * * *'
-  workflow_dispatch:
+    - cron: "26 * * * *"
 
 jobs:
   check:
