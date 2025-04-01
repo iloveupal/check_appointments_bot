@@ -65,7 +65,7 @@ export async function checkAppointments(venues) {
     log_info('Starting appointment checker...');
 
     const browser = await puppeteer.launch({
-        headless: !debug,
+        headless: true,
         defaultViewport: null,
         args: [
             '--no-sandbox',
