@@ -1,11 +1,10 @@
-name: Check Appointments
-
 on:
   schedule:
-    - cron: "26 * * * *"
+    - cron: "40 * * * *"
+  workflow_dispatch:
 
 jobs:
-  check:
+  my_job:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
