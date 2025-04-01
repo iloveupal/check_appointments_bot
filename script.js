@@ -5,6 +5,7 @@ import { sendTelegramNotification } from './telegram.js';
 
 async function runJob() {
     try {
+        log_info(venues);
         const foundAppointments = await checkAppointments(venues);
 
         log_info(foundAppointments);

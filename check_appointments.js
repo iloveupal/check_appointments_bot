@@ -1,12 +1,11 @@
 
 import puppeteer from "puppeteer";
-import { debug } from './config.js';
 import { log_info } from "./log.js";
 
 async function normalizePage(page) {
     await page.goto('https://app.cituro.com/booking/bev#step=1', { waitUntil: 'networkidle2' });
 
-    // await page.waitForSelector('button.add-toggle', { timeout: 3000 });
+    log_info(`visited ${page.url()}`);
 
     return page;
 }
@@ -20,6 +19,9 @@ async function normalizePage(page) {
 async function checkLocationAppointments(page, locationName) {
     try {
         await page.waitForSelector('.ServiceEntryView', { timeout: 5000 });
+        log_info(`awaited selector .ServiceEntryView`);
+
+        page.exposeFunction('remoteLog', (...msg) => log_info(...msg));
 
         // Find and click the location's add-toggle button
         const locationFound = await page.evaluate((name) => {
@@ -27,6 +29,8 @@ async function checkLocationAppointments(page, locationName) {
             const rows = Array.from(document.querySelectorAll('.ServiceEntryView')).filter(el =>
                 el.textContent && el.textContent.toLocaleLowerCase().includes(name.toLocaleLowerCase())
             );
+
+            window.remoteLog(`checks ${name}: rows: ${rows.length}`);
 
             if (rows.length > 0) {
                 rows[0].click();
@@ -41,11 +45,13 @@ async function checkLocationAppointments(page, locationName) {
         }
 
         await page.waitForNavigation();
+        log_info(`waited for navigation: ${locationName}`);
 
-        const appointments = await page.evaluate(() => {
+        const appointments = await page.evaluate((locationName) => {
             const dateButton = Array.from(document.querySelectorAll('.GroupEventSuggestionWidget'));
+            window.remoteLog(`found dateButtons: ${dateButton.length}, at: ${locationName}`);
             return dateButton.length;
-        });
+        }, locationName);
 
         return appointments;
     } catch (error) {
@@ -75,6 +81,9 @@ export async function checkAppointments(venues) {
 
     try {
         const results = await Promise.all(venues.map(async (location) => ({ result: await checkLocationAppointments(await normalizePage(await browser.newPage()), location), location })));
+
+        log_info(`results: ${JSON.stringify(results)}`);
+
         const resultsFiltered = results.filter(({ result }) => result);
 
         if (resultsFiltered.length) {
