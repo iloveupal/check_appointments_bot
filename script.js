@@ -11,7 +11,7 @@ async function runJob() {
         log_info(foundAppointments);
 
         foundAppointments.length ? await sendTelegramNotification(
-            `Found Appointments: ${foundAppointments.map(({location}) => location).join(', ')}`
+            `хрю хрю: ${foundAppointments.map(({location}) => location).join(', ')}`
         ) : log_info('no appointments found, exiting');
     } catch (e) {
         log_important(e);
